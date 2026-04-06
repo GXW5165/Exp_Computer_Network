@@ -124,7 +124,7 @@ void tcp_send_probe_packet(struct tcp_sock *tsk)
 	ip_init_hdr(ip, tsk->sk_sip, tsk->sk_dip,
 		IP_BASE_HDR_SIZE + TCP_BASE_HDR_SIZE + 1, IPPROTO_TCP);
 	tcp_init_hdr(tcp, tsk->sk_sport, tsk->sk_dport,
-		tsk->snd_una, tsk->rcv_nxt, TCP_ACK, tsk->rcv_wnd);
+		tsk->snd_una - 1, tsk->rcv_nxt, TCP_ACK, tsk->rcv_wnd);
 
 	tcp->checksum = tcp_checksum(ip, tcp);
 	ip->checksum = ip_checksum(ip);

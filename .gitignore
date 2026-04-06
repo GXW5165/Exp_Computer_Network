@@ -1,0 +1,15 @@
+# 可执行文件
+tcp_stack
+
+# 编译文件
+*.o
+
+# 测试生成文件
+*.log
+*.pcap
+*.dat
+
+# Python缓存
+__pycache__/
+*.pyc
+

@@ -75,7 +75,7 @@ void *tcp_client(void *arg)
 		exit(1);
 	}
 
-	char sendbuf[1000];
+	char sendbuf[TCP_MSS];
 	while (1)
 	{
 		int rlen = fread(sendbuf, 1, sizeof(sendbuf), fp);

@@ -292,7 +292,8 @@ inline int tcp_sock_accept_queue_full(struct tcp_sock *tsk)
 
 int tcp_tx_window_test(struct tcp_sock *tsk)
 {
-	return greater_or_equal_32b(tsk->snd_una + tsk->snd_wnd, tsk->snd_nxt + 1);
+	int32_t usable = (int32_t)(tsk->snd_una + tsk->snd_wnd - tsk->snd_nxt);
+	return usable >= TCP_MSS;
 }
 
 int tcp_sock_read(struct tcp_sock *tsk, char *buf, int len)
@@ -329,8 +330,9 @@ int tcp_sock_write(struct tcp_sock *tsk, char *buf, int len)
 	pthread_mutex_lock(&tsk->sk_lock);
 
 	while (off < len) {
-		int need = min(TCP_MSS, len - off);
-		while (!greater_or_equal_32b(tsk->snd_una + tsk->snd_wnd, tsk->snd_nxt + need)) {
+		int chunk = min(TCP_MSS, len - off);
+		// 检查窗口：剩余窗口是否至少能发送 chunk 字节
+		while ((int32_t)(tsk->snd_una + tsk->snd_wnd - tsk->snd_nxt) < chunk) {
 			pthread_mutex_unlock(&tsk->sk_lock);
 			sleep_on(tsk->wait_send);
 			pthread_mutex_lock(&tsk->sk_lock);
@@ -338,10 +340,9 @@ int tcp_sock_write(struct tcp_sock *tsk, char *buf, int len)
 				pthread_mutex_unlock(&tsk->sk_lock);
 				return off > 0 ? off : -1;
 			}
-			need = min(TCP_MSS, len - off);
+			chunk = min(TCP_MSS, len - off);
 		}
 
-		int chunk = min(TCP_MSS, len - off);
 		int pkt_size = ETHER_HDR_SIZE + IP_BASE_HDR_SIZE + TCP_BASE_HDR_SIZE + chunk;
 		char *packet = calloc(1, pkt_size);
 		if (!packet) {
@@ -358,7 +359,6 @@ int tcp_sock_write(struct tcp_sock *tsk, char *buf, int len)
 	pthread_mutex_unlock(&tsk->sk_lock);
 	return off;
 }
-
 inline void tcp_sock_accept_enqueue(struct tcp_sock *tsk)
 {
 	if (!list_empty(&tsk->list))
