@@ -20,12 +20,6 @@ typedef struct RouteItem {
 
 static BasicNode *basic_root = NULL;
 
-/*
- * Advanced structure:
- * 1) 18-bit first-level table
- * 2) 6-bit middle blocks for prefixes up to /24
- * 3) 8-bit leaf blocks for prefixes longer than /24
- */
 #define ADV_L1_BITS 18
 #define ADV_L2_BITS  6
 #define ADV_L3_BITS  8
@@ -334,11 +328,6 @@ void create_tree_advance(const char* forward_file){
         exit(1);
     }
 
-    /*
-     * Build the tables in prefix-length order.
-     * Shorter prefixes are inserted first so deeper blocks can inherit the
-     * correct fallback result from their parent table entry.
-     */
     for(size_t i = 0; i < route_cnt; ++i){
         if(routes[i].mask_len <= ADV_L1_BITS)
             adv_insert_l1(routes[i].ip, routes[i].mask_len, routes[i].port);
